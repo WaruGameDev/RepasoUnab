@@ -5,26 +5,36 @@ using DG.Tweening;
 
 public class PlayerPlatformController : MonoBehaviour
 {
+    [Header("Platform Values")]
     public float moveSpeed = 5;
     private float actualSpeed;
     public float jumpHeight = 5;
-    public Transform model;
-    public Rigidbody2D theRb;
     public float speedMultilpy = 1.5f;
     public float fallMultiply = 0.3f;
 
+    [Header("Visuals")]
+    public Transform model;
+    public Rigidbody2D theRb;
+    public Animator anim;
+
+    [Header("Better jumps")]
     public float hangeTime = .2f;
     public float hangeCount;
 
     public float jumpBufferLenght = .1f;
     public float jumpBufferCount;
 
+    [Header("Detección de piso")]
     public Transform groundCheck;
     public bool isGrounded;
     public LayerMask ground;
     public float groundCheckRadius = .1f;
 
-    public Animator anim;
+    [Header("Detección de pared")]
+    public bool isByWall;
+    public float wallDistance = 0.5f;
+    public Vector3 offsetWallRay;
+    public float fallSpeedOnWall = -4;
 
 
     private void Update()
@@ -39,8 +49,10 @@ public class PlayerPlatformController : MonoBehaviour
         {
             actualSpeed = moveSpeed; 
         }
-
+        
         theRb.velocity = new Vector2(actualSpeed * x, theRb.velocity.y);
+
+       
         anim.SetFloat("Speed", Mathf.Abs(theRb.velocity.x));
         //Salto
 
@@ -52,23 +64,19 @@ public class PlayerPlatformController : MonoBehaviour
             hangeCount = hangeTime;
         }
         else
-        {
-            if (hangeCount > -3)
-            {
-                hangeCount -= Time.deltaTime;
-            }
+        {           
+            hangeCount -= Time.deltaTime;
+           
         }
 
-        if(Input.GetButtonDown("Jump"))
+        if (Input.GetButtonDown("Jump"))
         {
             jumpBufferCount = jumpBufferLenght;
         }
         else
         {
-            if(jumpBufferCount > -3)
-            {
-                jumpBufferCount -= Time.deltaTime;
-            }
+            jumpBufferCount -= Time.deltaTime;
+
         }
 
         if(jumpBufferCount >= 0 && hangeCount > 0)
@@ -77,7 +85,7 @@ public class PlayerPlatformController : MonoBehaviour
             jumpBufferCount = 0;
             hangeCount = 0;
         }
-        if(Input.GetButtonUp("Jump") && theRb.velocity.y >0)
+        if(Input.GetButtonUp("Jump") && theRb.velocity.y >0 && !isByWall)
         {
             theRb.velocity = new Vector2(theRb.velocity.x, theRb.velocity.y * fallMultiply);
         }
@@ -90,9 +98,23 @@ public class PlayerPlatformController : MonoBehaviour
         {
             model.DORotate(new Vector3(0, 0, 0), 0.5f);
         }
-        
-        
+        //wallDetect
+        isByWall = Physics2D.Raycast(transform.position + offsetWallRay, model.right, wallDistance, ground);
+        Debug.DrawRay(transform.position+ offsetWallRay, model.right * wallDistance, Color.red);
 
+        anim.SetBool("Wall", isByWall && !isGrounded);
+
+        if(isByWall && !isGrounded)
+        {
+            Vector2 clampVel = theRb.velocity;
+            clampVel.y = Mathf.Clamp(clampVel.y, fallSpeedOnWall, Mathf.Infinity);
+            theRb.velocity = clampVel;      
+            if(Input.GetButtonDown("Jump") && Input.GetAxisRaw("Horizontal") != 0)
+            {
+                Vector2 vector = model.right;
+                theRb.velocity = new Vector2(vector.x *(jumpHeight), jumpHeight);
+            }
+        }
     }
 
 }
