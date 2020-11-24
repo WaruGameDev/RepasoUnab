@@ -5,6 +5,7 @@ using DG.Tweening;
 
 public class Coin : MonoBehaviour
 {
+    public Item item;
     public int amount = 1;
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -16,6 +17,7 @@ public class Coin : MonoBehaviour
         if(other.CompareTag("Player"))
         {
             GameManager.sGameManager.AddCoin(amount);
+            InventoryManager.sInventoryManager.AddItem(item);
             Destroy(gameObject);
         }
     }    

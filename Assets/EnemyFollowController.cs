@@ -17,6 +17,7 @@ public class EnemyFollowController : MonoBehaviour
     public Vector2 posicionInicial, playerSpot;
     public float timeToAtack = 4;
     private Collider2D col;
+    public int damage = 1;
 
     private void Start()
     {
@@ -34,6 +35,14 @@ public class EnemyFollowController : MonoBehaviour
             StartCoroutine(Attacking());
         }
     }
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if(collision.transform.CompareTag("Player"))
+        {
+            collision.transform.GetComponent<Health>().TakeDamage(damage);
+        }
+    }
+
     public IEnumerator Attacking()
     {
         transform.DOMove(playerSpot, timeToAtack);
